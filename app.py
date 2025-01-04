@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+import chromedriver_autoinstaller
 import time
 
 app = Flask(__name__)
@@ -13,14 +14,19 @@ def create_image():
     if not prompt:
         return jsonify({'error': 'No prompt provided'}), 400
 
-    # Initialize Selenium WebDriver
+    # Automatically install the correct version of ChromeDriver
+    chromedriver_autoinstaller.install()
+
+    # Initialize Selenium WebDriver with headless Chrome
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')  # Run in headless mode (no browser window)
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome(options=options)
 
     try:
         # Open the target website
-        driver.get("https://example.com")
+        driver.get("https://bing.com/images/create")
 
         # Find the type container (input field) and enter the prompt
         input_box = driver.find_element(By.ID, "b_searchbox gi_sb")
@@ -28,7 +34,7 @@ def create_image():
         input_box.send_keys(Keys.RETURN)
 
         # Wait for the results to load
-        time.sleep(5)
+        time.sleep(10)
 
         # Find the image container and extract the image URL
         img_container = driver.find_element(By.CLASS_NAME, "imgri-container")
