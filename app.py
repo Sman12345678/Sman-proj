@@ -4,13 +4,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import chromedriver_autoinstaller
 import time
-import pyppeteer
 
 app = Flask(__name__)
 
 @app.route('/create', methods=['GET'])
 def create_image():
-    # Get the prompt from the query parameter
     prompt = request.args.get('prompt')
     if not prompt:
         return jsonify({'error': 'No prompt provided'}), 400
@@ -18,30 +16,28 @@ def create_image():
     # Automatically install the correct version of ChromeDriver
     chromedriver_autoinstaller.install()
 
-    # Use pyppeteer to get the path to Chromium
-    chromium_path = pyppeteer.executablePath()
-
-    # Initialize Selenium WebDriver with headless Chromium
+    # Set up Selenium WebDriver with headless Chrome
     options = webdriver.ChromeOptions()
-    options.add_argument('--headless')  # Run in headless mode (no browser window)
+    options.add_argument('--headless')  # Run in headless mode
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    options.binary_location = chromium_path  # Point to the installed Chromium binary
+    options.binary_location = '/usr/bin/google-chrome'  # Path to Chrome on Render
+
     driver = webdriver.Chrome(options=options)
 
     try:
         # Open the target website
-        driver.get("https://bing.com/images/create")
+        driver.get("https://bing.com/images/create")  # Replace with the actual URL
 
-        # Find the type container (input field) and enter the prompt
+        # Locate the input box and submit the prompt
         input_box = driver.find_element(By.ID, "b_searchbox gi_sb")
         input_box.send_keys(prompt)
         input_box.send_keys(Keys.RETURN)
 
-        # Wait for the results to load
+        # Wait for the image to load
         time.sleep(8)
 
-        # Find the image container and extract the image URL
+        # Extract the image URL
         img_container = driver.find_element(By.CLASS_NAME, "imgri-container")
         img_tag = img_container.find_element(By.CLASS_NAME, "image_row_img")
         img_url = img_tag.get_attribute("src")
