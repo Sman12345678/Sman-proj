@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import chromedriver_autoinstaller
 import time
+import pyppeteer
 
 app = Flask(__name__)
 
@@ -17,11 +18,15 @@ def create_image():
     # Automatically install the correct version of ChromeDriver
     chromedriver_autoinstaller.install()
 
-    # Initialize Selenium WebDriver with headless Chrome
+    # Use pyppeteer to get the path to Chromium
+    chromium_path = pyppeteer.executablePath()
+
+    # Initialize Selenium WebDriver with headless Chromium
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')  # Run in headless mode (no browser window)
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    options.binary_location = chromium_path  # Point to the installed Chromium binary
     driver = webdriver.Chrome(options=options)
 
     try:
@@ -34,7 +39,7 @@ def create_image():
         input_box.send_keys(Keys.RETURN)
 
         # Wait for the results to load
-        time.sleep(10)
+        time.sleep(8)
 
         # Find the image container and extract the image URL
         img_container = driver.find_element(By.CLASS_NAME, "imgri-container")
