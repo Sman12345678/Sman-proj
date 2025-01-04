@@ -1,6 +1,6 @@
 Flask
-werkzeug
 selenium
 beautifulsoup4
 requests
 chromedriver-autoinstaller
+pyppeteer
