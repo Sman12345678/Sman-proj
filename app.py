@@ -15,26 +15,27 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
-# Path for Chrome binary
-CHROME_PATH = "/tmp/google-chrome/google-chrome"
+# Chrome binary path
+CHROME_PATH = "/tmp/chrome/chrome"
 
-# Function to download and extract Chrome if not already installed
+# Function to download a pre-built Chrome binary
 def setup_chrome():
     if not os.path.exists(CHROME_PATH):
-        logger.info("Chrome not found. Downloading...")
+        logger.info("Chrome not found. Downloading pre-built Chrome binary...")
         os.makedirs("/tmp/chrome", exist_ok=True)
-        chrome_url = "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
-        chrome_deb_path = "/tmp/chrome/chrome.deb"
         
-        # Download Chrome
+        # Download pre-built Chrome binary
+        chrome_url = "https://github.com/scheib/chromium-latest-linux/raw/master/chrome-linux.zip"
+        chrome_zip_path = "/tmp/chrome/chrome.zip"
+        
         response = requests.get(chrome_url, stream=True)
-        with open(chrome_deb_path, "wb") as f:
+        with open(chrome_zip_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
         
         logger.info("Chrome downloaded. Extracting...")
-        subprocess.run(["dpkg", "-x", chrome_deb_path, "/tmp/chrome"], check=True)
-        subprocess.run(["mv", "/tmp/chrome/opt/google/chrome", "/tmp/google-chrome"], check=True)
+        subprocess.run(["unzip", "-o", chrome_zip_path, "-d", "/tmp/chrome"], check=True)
+        os.chmod(CHROME_PATH, 0o755)
         logger.info("Chrome setup completed.")
 
 # Endpoint to generate image
@@ -58,7 +59,7 @@ def create_image():
     options.binary_location = CHROME_PATH
     
     # Start ChromeDriver
-    service = Service(executable_path="/usr/bin/chromedriver")  # Update this if chromedriver is installed elsewhere
+    service = Service(executable_path="/usr/bin/chromedriver")  # Update if chromedriver is elsewhere
     driver = webdriver.Chrome(service=service, options=options)
     
     try:
