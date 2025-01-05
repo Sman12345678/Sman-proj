@@ -2,6 +2,7 @@ import os
 import logging
 import requests
 import subprocess
+import shutil
 from flask import Flask, request, jsonify
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -15,28 +16,41 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
-# Chrome binary path
+# Path for Chrome binary
 CHROME_PATH = "/tmp/chrome/chrome"
 
-# Function to download a pre-built Chrome binary
+# Function to download and set up Chrome
 def setup_chrome():
     if not os.path.exists(CHROME_PATH):
         logger.info("Chrome not found. Downloading pre-built Chrome binary...")
-        os.makedirs("/tmp/chrome", exist_ok=True)
         
+        # Ensure the /tmp/chrome directory is clean
+        if os.path.exists("/tmp/chrome"):
+            shutil.rmtree("/tmp/chrome")
+        os.makedirs("/tmp/chrome", exist_ok=True)
+
         # Download pre-built Chrome binary
         chrome_url = "https://github.com/scheib/chromium-latest-linux/raw/master/chrome-linux.zip"
         chrome_zip_path = "/tmp/chrome/chrome.zip"
         
+        # Download Chrome ZIP file
         response = requests.get(chrome_url, stream=True)
         with open(chrome_zip_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
         
+        # Validate the downloaded file
+        if os.path.getsize(chrome_zip_path) == 0:
+            raise ValueError("Downloaded ZIP file is empty or corrupted.")
+        
         logger.info("Chrome downloaded. Extracting...")
-        subprocess.run(["unzip", "-o", chrome_zip_path, "-d", "/tmp/chrome"], check=True)
-        os.chmod(CHROME_PATH, 0o755)
-        logger.info("Chrome setup completed.")
+        try:
+            subprocess.run(["unzip", "-o", chrome_zip_path, "-d", "/tmp/chrome"], check=True)
+            os.chmod(CHROME_PATH, 0o755)
+            logger.info("Chrome setup completed.")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Unzip failed: {e}")
+            raise e
 
 # Endpoint to generate image
 @app.route("/create", methods=["GET"])
@@ -59,12 +73,12 @@ def create_image():
     options.binary_location = CHROME_PATH
     
     # Start ChromeDriver
-    service = Service(executable_path="/usr/bin/chromedriver")  # Update if chromedriver is elsewhere
+    service = Service(executable_path="/usr/bin/chromedriver")  # Update path if chromedriver is elsewhere
     driver = webdriver.Chrome(service=service, options=options)
     
     try:
         # Navigate to the image generation site
-        driver.get("https://bing.com/images/create")  # Replace with actual URL
+        driver.get("https://bing.com/images/create")  # Replace with the actual URL
         
         # Enter the prompt and generate the image
         search_box = driver.find_element(By.ID, "b_searchboxForm")
