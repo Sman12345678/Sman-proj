@@ -16,15 +16,15 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 # Path for Chrome binary
-CHROME_PATH = "/opt/google-chrome/google-chrome"
+CHROME_PATH = "/tmp/google-chrome/google-chrome"
 
 # Function to download and extract Chrome if not already installed
 def setup_chrome():
     if not os.path.exists(CHROME_PATH):
         logger.info("Chrome not found. Downloading...")
-        os.makedirs("/opt/chrome", exist_ok=True)
+        os.makedirs("/tmp/chrome", exist_ok=True)
         chrome_url = "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
-        chrome_deb_path = "/opt/chrome/chrome.deb"
+        chrome_deb_path = "/tmp/chrome/chrome.deb"
         
         # Download Chrome
         response = requests.get(chrome_url, stream=True)
@@ -33,8 +33,8 @@ def setup_chrome():
                 f.write(chunk)
         
         logger.info("Chrome downloaded. Extracting...")
-        subprocess.run(["dpkg", "-x", chrome_deb_path, "/opt/chrome"], check=True)
-        subprocess.run(["mv", "/opt/chrome/opt/google/chrome", "/opt/google-chrome"], check=True)
+        subprocess.run(["dpkg", "-x", chrome_deb_path, "/tmp/chrome"], check=True)
+        subprocess.run(["mv", "/tmp/chrome/opt/google/chrome", "/tmp/google-chrome"], check=True)
         logger.info("Chrome setup completed.")
 
 # Endpoint to generate image
@@ -87,5 +87,6 @@ def create_image():
         driver.quit()
 
 if __name__ == "__main__":
-    # Run the Flask app
-    app.run(host="0.0.0.0", port=5000)
+    # Use the PORT environment variable in Render
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
