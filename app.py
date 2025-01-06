@@ -31,7 +31,7 @@ def setup_chrome():
 
         # Download pre-built Chrome binary
         chrome_url = "https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2FLAST_CHANGE?alt=media"
-        chrome_zip_path = "/tmp/chrome/chrome.zip"
+        chrome_zip_path = "https://commondatastorage.googleapis.com/chromium-browser-snapshots/index.html?prefix=Android/1000000/chrome-android-zip"
         
         # Download Chrome ZIP file
         response = requests.get(chrome_url, stream=True)
